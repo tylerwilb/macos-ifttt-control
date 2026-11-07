@@ -4,7 +4,8 @@
     "description": "Cloud-Based IFTTT Task Automation Service for macOS.",
     "main": "main.js",
     "scripts": {
-        "start": "electron ."
+        "start": "electron .",
+        "test:deps": "node test/dependencies.js"
     },
     "dependencies": {
         "bootstrap": "^4.1.2",

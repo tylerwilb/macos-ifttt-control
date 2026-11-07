@@ -40,3 +40,23 @@ create your own applets by checking our documentation [here](https://github.com/
 
 ## Copyright
 - Copyright (c) 2017-2019 [Abdy Franco](http://abdyfran.co/)
+
+## Development checks
+
+Use a supported Node.js release for dependency installation and packaging (Node.js 24
+recommended). The plist/XML tooling used by `electron-packager` requires Node.js
+14.6 or newer on the **build host**; it is not imported by the Electron application.
+The Electron runtime version is pinned separately in `src/app/package-lock.json`.
+
+```sh
+cd src/app
+npm ci --ignore-scripts
+npm run test:deps
+node node_modules/electron-packager/cli.js . "macOS IFTTT Control" --platform=mas --arch=x64 --out=/tmp/macos-ifttt-package
+```
+
+The last command downloads the pinned Electron binary and creates an unsigned app
+bundle only. It does not run the CLI installer or register a service. MAS signing,
+macOS launch/UI checks, and any live automation validation are separate release
+gates. Do not use `src/build.sh` for isolated dependency checks: that script also
+fetches the CLI service tools.
