@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const remote = require('electron').remote;
+const appVersion = require('./package.json').version;
 const request = require("request");
 
 // Get config
@@ -137,7 +137,7 @@ function deleteEvent(id) {
      */
     jQuery(document).ready(function () {
         // Get current version
-        let version = remote.app.getVersion();
+        let version = appVersion;
 
         // Get remote version
         let package_url = 'https://raw.githubusercontent.com/abdyfranco/macos-ifttt-control/master/src/app/package.json';

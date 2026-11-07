@@ -46,6 +46,7 @@ create your own applets by checking our documentation [here](https://github.com/
 Use a supported Node.js release for dependency installation and packaging (Node.js 24
 recommended). The plist/XML tooling used by `electron-packager` requires Node.js
 14.6 or newer on the **build host**; it is not imported by the Electron application.
+The Electron 42 installer requires build-host Node.js 22.12 or newer.
 The Electron runtime version is pinned separately in `src/app/package-lock.json`.
 
 ```sh
@@ -60,3 +61,17 @@ bundle only. It does not run the CLI installer or register a service. MAS signin
 macOS launch/UI checks, and any live automation validation are separate release
 gates. Do not use `src/build.sh` for isolated dependency checks: that script also
 fetches the CLI service tools.
+
+### Electron 42 migration gate
+
+The renderer still uses legacy Node-enabled local pages. Explicit compatibility
+preferences preserve that behavior; this is not a context-isolation security
+redesign. Main-process navigation is limited to the three bundled pages, popup
+windows are blocked, and the quit IPC accepts only the current local main frame.
+
+Run `npm test` for offline compatibility checks. Before merging the major Electron
+upgrade, qualify launch, onboarding navigation, populated and empty webhook/event
+views, modal cancel/reopen, update-page loading, menus and quit on a supported Mac
+with an isolated synthetic HOME and all external requests/commands intercepted.
+Do not register a service, run an updater, or send real IFTTT/device requests during
+these checks. Unsigned cross-platform packaging is not macOS runtime validation.

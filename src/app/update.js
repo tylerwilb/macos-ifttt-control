@@ -7,7 +7,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
-const remote = require('electron').remote;
+const {ipcRenderer} = require('electron');
+const appVersion = require('./package.json').version;
+const request = require('request');
 
 /**
  * Frontend script.
@@ -26,16 +28,11 @@ const remote = require('electron').remote;
         exec('php ' + update_script, function (error, stdout, stderr) {
             console.log(stdout);
 
-            // Reload the application if the source code it's changed
-            require('electron-reload')(__dirname, {
-                electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
-            });
-
-            setTimeout(function() {
-                // Close the application if electron-reload doesn't detect a source change
-                remote.app.quit();
-            }, 2000);
+            // electron-reload is a main-process development helper. Do not
+            // load it in a packaged renderer; quit after the updater finishes.
+            ipcRenderer.send('app:quit');
         });
+
     });
 
     /*!
@@ -43,7 +40,7 @@ const remote = require('electron').remote;
      */
     jQuery(document).ready(function () {
         // Get current version
-        let version = remote.app.getVersion();
+        let version = appVersion;
         $('#current_version').text(version);
 
         // Get remote version
