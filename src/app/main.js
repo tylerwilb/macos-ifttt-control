@@ -1,7 +1,32 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const Menu = require('electron').Menu
+const {pathToFileURL} = require('url')
+
+const localPages = new Set(['index.html', 'install.html', 'update.html'].map(
+    file => pathToFileURL(path.join(__dirname, file)).href
+))
+
+function isLocalPage(url) {
+    try {
+        const page = new URL(url)
+        page.hash = ''
+        page.search = ''
+        return localPages.has(page.href)
+    } catch (_) {
+        return false
+    }
+}
+
+// Only the app's own top-level local page may request a quit.
+ipcMain.on('app:quit', event => {
+    if (mainWindow && event.sender === mainWindow.webContents &&
+        event.senderFrame === mainWindow.webContents.mainFrame &&
+        isLocalPage(event.senderFrame.url)) {
+        app.quit()
+    }
+})
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -15,13 +40,21 @@ function createWindow() {
         minHeight: 480,
         minWidth: 700,
         webPreferences: {
-            nodeIntegration: true
+            // These trusted local pages still use CommonJS and Node APIs.
+            nodeIntegration: true,
+            contextIsolation: false,
+            sandbox: false
         },
         icon: path.join(__dirname, '/assets/icon.png')
     })
 
     // and load the index.html of the app.
-    mainWindow.loadFile('index.html')
+    mainWindow.webContents.setWindowOpenHandler(() => ({action: 'deny'}))
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (!isLocalPage(url)) event.preventDefault()
+    })
+    mainWindow.webContents.on('will-attach-webview', event => event.preventDefault())
+    mainWindow.loadFile(path.join(__dirname, 'index.html'))
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
@@ -63,7 +96,7 @@ function createMenu() {
         submenu: [
             {
                 label: "About macOS IFTTT Control",
-                selector: "orderFrontStandardAboutPanel:"
+                role: "about"
             },
             {
                 type: "separator"
@@ -84,12 +117,12 @@ function createMenu() {
             {
                 label: "Undo",
                 accelerator: "CmdOrCtrl+Z",
-                selector: "undo:"
+                role: "undo"
             },
             {
                 label: "Redo",
                 accelerator: "Shift+CmdOrCtrl+Z",
-                selector: "redo:"
+                role: "redo"
             },
             {
                 type: "separator"
@@ -97,22 +130,22 @@ function createMenu() {
             {
                 label: "Cut",
                 accelerator: "CmdOrCtrl+X",
-                selector: "cut:"
+                role: "cut"
             },
             {
                 label: "Copy",
                 accelerator: "CmdOrCtrl+C",
-                selector: "copy:"
+                role: "copy"
             },
             {
                 label: "Paste",
                 accelerator: "CmdOrCtrl+V",
-                selector: "paste:"
+                role: "paste"
             },
             {
                 label: "Select All",
                 accelerator: "CmdOrCtrl+A",
-                selector: "selectAll:"
+                role: "selectAll"
             }
         ]
     }

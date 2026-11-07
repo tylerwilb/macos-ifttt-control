@@ -9,6 +9,7 @@ window.Bootstrap = require('bootstrap');
 // Support for external links
 $('body').on('click', 'a.external-link', (event) => {
     event.preventDefault();
-    let link = event.target.href;
+    let link = event.currentTarget.href;
+    if (!/^https?:/.test(link)) return;
     require('electron').shell.openExternal(link);
 });
